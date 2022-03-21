@@ -2,17 +2,18 @@ package com.qminder.borger.foursquare;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
+import com.qminder.borger.app.domain.BurgerJoint;
+import com.qminder.borger.foursquare.domain.BurgerJointOutput;
 import com.qminder.borger.foursquare.domain.PhotoOutput;
-import com.qminder.borger.imageRecognize.domain.BurgerImageOutputSuccess;
-import lombok.Builder;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
-import okhttp3.Response;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
+import java.time.Clock;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -25,9 +26,37 @@ public class FoursquareService {
     private final OkHttpClient client = new OkHttpClient();
     private final Gson gson = new Gson();
 
-    public String getTartuBurgerJoints() {
-        // TODO
-        return "";
+    public List<BurgerJoint> getTartuBurgerJoints() {
+
+        List<BurgerJoint> result = new ArrayList<>();
+
+        // category 13031 BurgerJoint
+        Request request = new Request.Builder()
+                .url("https://api.foursquare.com/v3/places/search?categories=13031&near=Tartu")
+                .get()
+                .addHeader("Accept", "application/json")
+                .addHeader("Authorization", apiKey)
+                .build();
+        try {
+            var response = client.newCall(request).execute();
+            if (response.isSuccessful()) {
+                List<BurgerJointOutput.BJEntry> entries = gson.fromJson(response.body().string(), BurgerJointOutput.class).results;
+                for (var entry : entries) {
+                    var geocode = entry.geocodes.main;
+                    var oneBurgerJoint = new BurgerJoint();
+                    oneBurgerJoint.setFsqId(entry.fsq_id);
+                    oneBurgerJoint.setName(entry.name);
+                    oneBurgerJoint.setLatitude(geocode.latitude);
+                    oneBurgerJoint.setLongitude(geocode.longitude);
+                    oneBurgerJoint.setCreatedAt(LocalDateTime.now(Clock.systemUTC()));
+                    result.add(oneBurgerJoint);
+                }
+            }
+
+        } catch (IOException e) {
+            throw new RuntimeException("Error with BurgerJoints.");
+        }
+        return result;
     }
 
     public List<String> getTartuBurgerJointPhotos(String fsqId) {
@@ -53,5 +82,4 @@ public class FoursquareService {
 
         return new ArrayList<>();
     }
-
 }
