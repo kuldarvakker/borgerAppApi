@@ -11,7 +11,6 @@ import org.springframework.stereotype.Service;
 
 import java.time.Clock;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -26,15 +25,11 @@ public class AppService {
     private final BurgerImageRecognizeService burgerImageRecognizeService;
 
     public List<BurgerJoint> findAllBurgerJoints() {
-        List<BurgerJoint> result = new ArrayList<>();
-        // TODO
-        // get BurgerJoints
-        // get Photos Of BurgerJoints
-        // filter photos
-        // add valid photos to list
-        // pass Full element out
+        return burgerJointRepository.findAll();
+    }
 
-        return result;
+    public List<Photo> findAllBurgerJointsPhotos() {
+        return photoRepository.findAll();
     }
 
     public void checkForNewBurgerJoints() {
