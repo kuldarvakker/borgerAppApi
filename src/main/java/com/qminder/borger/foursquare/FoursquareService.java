@@ -22,7 +22,7 @@ import java.util.stream.Collectors;
 public class FoursquareService {
 
     @Value("${foursquare.apiKey}")
-    private final String apiKey;
+    private String apiKey;
     private final OkHttpClient client = new OkHttpClient();
     private final Gson gson = new Gson();
 
