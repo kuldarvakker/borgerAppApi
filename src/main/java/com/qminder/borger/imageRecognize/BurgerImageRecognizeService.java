@@ -17,7 +17,7 @@ public class BurgerImageRecognizeService {
 
     public String findFirstBurgerImage(List<String> pictureUrls) {
         var pojoInputObj = new BurgerImageInput();
-        pojoInputObj.urls.addAll(pictureUrls);
+        pojoInputObj.setUrls(pictureUrls);
         Request request = new Request.Builder()
                 .url("https://pplkdijj76.execute-api.eu-west-1.amazonaws.com/prod/recognize")
                 .post(RequestBody.create(MediaType.parse("JSON"), gson.toJson(pojoInputObj)))
@@ -27,7 +27,7 @@ public class BurgerImageRecognizeService {
             var response = client.newCall(request).execute();
             if (response.isSuccessful()) {
                 var s = gson.fromJson(response.body().string(), BurgerImageOutputSuccess.class);
-                return s.urlWithBurger;
+                return s.getUrlWithBurger();
             }
         } catch (IOException e) {
             throw new RuntimeException("Error finding first burger");

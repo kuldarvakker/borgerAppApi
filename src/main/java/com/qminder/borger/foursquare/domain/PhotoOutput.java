@@ -1,11 +1,14 @@
 package com.qminder.borger.foursquare.domain;
 
+import lombok.Data;
+
+@Data
 public class PhotoOutput {
 
-    public String id;
-    public String created_at;
-    public String prefix;
-    public String suffix;
-    public String width;
-    public String height;
+    private String id;
+    private String created_at;
+    private String prefix;
+    private String suffix;
+    private String width;
+    private String height;
 }

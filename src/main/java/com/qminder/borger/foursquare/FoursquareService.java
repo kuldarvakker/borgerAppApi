@@ -40,14 +40,15 @@ public class FoursquareService {
         try {
             var response = client.newCall(request).execute();
             if (response.isSuccessful()) {
-                List<BurgerJointOutput.BJEntry> entries = gson.fromJson(response.body().string(), BurgerJointOutput.class).results;
+                List<BurgerJointOutput.BJEntry> entries =
+                        gson.fromJson(response.body().string(), BurgerJointOutput.class).getResults();
                 for (var entry : entries) {
-                    var geocode = entry.geocodes.main;
+                    var geocode = entry.getGeocodes().getMain();
                     var oneBurgerJoint = new BurgerJoint();
-                    oneBurgerJoint.setFsqId(entry.fsq_id);
-                    oneBurgerJoint.setName(entry.name);
-                    oneBurgerJoint.setLatitude(geocode.latitude);
-                    oneBurgerJoint.setLongitude(geocode.longitude);
+                    oneBurgerJoint.setFsqId(entry.getFsq_id());
+                    oneBurgerJoint.setName(entry.getName());
+                    oneBurgerJoint.setLatitude(geocode.getLatitude());
+                    oneBurgerJoint.setLongitude(geocode.getLongitude());
                     oneBurgerJoint.setCreatedAt(LocalDateTime.now(Clock.systemUTC()));
                     result.add(oneBurgerJoint);
                 }
@@ -73,7 +74,7 @@ public class FoursquareService {
                 Type photoOutputListType = new TypeToken<ArrayList<PhotoOutput>>(){}.getType();
                 List<PhotoOutput> photos = gson.fromJson(response.body().string(), photoOutputListType);
                 return photos.stream()
-                        .map(photo -> photo.prefix + "original" + photo.suffix)
+                        .map(photo -> photo.getPrefix() + "original" + photo.getSuffix())
                         .collect(Collectors.toList());
             }
         } catch (IOException e) {

@@ -1,6 +1,9 @@
 package com.qminder.borger.imageRecognize.domain;
 
+import lombok.Data;
+
+@Data
 public class BurgerImageOutputError {
 
-    public String error;
+    private String error;
 }

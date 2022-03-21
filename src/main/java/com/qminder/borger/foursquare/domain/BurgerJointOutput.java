@@ -1,26 +1,31 @@
 package com.qminder.borger.foursquare.domain;
 
+import lombok.Data;
+
 import java.util.List;
 
+@Data
 public class BurgerJointOutput {
 
-    public List<BJEntry> results;
+    private List<BJEntry> results;
 
+    @Data
     public class BJEntry {
 
-        public String fsq_id;
-        public Geocodes geocodes;
-        public String name;
+        private String fsq_id;
+        private Geocodes geocodes;
+        private String name;
 
-
+        @Data
         public class Geocodes {
 
-            public GeocodesMain main;
+            private GeocodesMain main;
 
+            @Data
             public class GeocodesMain {
 
-                public Double latitude;
-                public Double longitude;
+                private Double latitude;
+                private Double longitude;
             }
         }
     }
