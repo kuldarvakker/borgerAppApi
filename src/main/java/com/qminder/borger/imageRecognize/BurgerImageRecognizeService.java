@@ -3,6 +3,7 @@ package com.qminder.borger.imageRecognize;
 import com.google.gson.Gson;
 import com.qminder.borger.imageRecognize.domain.BurgerImageInput;
 import com.qminder.borger.imageRecognize.domain.BurgerImageOutputSuccess;
+import com.qminder.borger.utils.Utils;
 import okhttp3.*;
 import org.springframework.stereotype.Service;
 
@@ -23,14 +24,17 @@ public class BurgerImageRecognizeService {
                 .post(RequestBody.create(MediaType.parse("JSON"), gson.toJson(pojoInputObj)))
                 .addHeader("Accept", "application/json")
                 .build();
+        Response response = null;
         try {
-            var response = client.newCall(request).execute();
+            response = client.newCall(request).execute();
             if (response.isSuccessful()) {
                 var s = gson.fromJson(response.body().string(), BurgerImageOutputSuccess.class);
                 return s.getUrlWithBurger();
             }
         } catch (IOException e) {
-            throw new RuntimeException("Error finding first burger");
+            throw new RuntimeException("IO_Error finding first burger");
+        } finally {
+            Utils.close(response);
         }
         // no burger :(
         return "";

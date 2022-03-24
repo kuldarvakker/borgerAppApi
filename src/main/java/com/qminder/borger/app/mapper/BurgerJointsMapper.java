@@ -5,10 +5,9 @@ import com.qminder.borger.app.dto.BurgerJointDto;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
-public class BurgerJointsMapper implements Mapper<BurgerJointDto, BurgerJoint> {
-    @Override
+public class BurgerJointsMapper {
+
     public BurgerJointDto toDto(BurgerJoint entity) {
         var dto = new BurgerJointDto();
         dto.setId(entity.getId());
@@ -16,11 +15,11 @@ public class BurgerJointsMapper implements Mapper<BurgerJointDto, BurgerJoint> {
         dto.setLongitude(entity.getLongitude());
         dto.setLatitude(entity.getLatitude());
         dto.setFsqId(entity.getFsqId());
+        dto.setPhotoUrl(entity.getPhotoUrl());
         dto.setCreatedAt(entity.getCreatedAt());
         return dto;
     }
 
-    @Override
     public List<BurgerJointDto> toDtos(List<BurgerJoint> entities) {
         List<BurgerJointDto> dtos = new ArrayList<>();
         for (BurgerJoint entity : entities) {

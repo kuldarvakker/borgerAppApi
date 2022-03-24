@@ -10,6 +10,7 @@ public class BurgerJointDto {
     private long id;
     private String fsqId;
     private String name;
+    private String photoUrl;
     private Double longitude;
     private Double latitude;
 

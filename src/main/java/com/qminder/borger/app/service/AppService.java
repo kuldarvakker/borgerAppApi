@@ -1,9 +1,7 @@
 package com.qminder.borger.app.service;
 
 import com.qminder.borger.app.domain.BurgerJoint;
-import com.qminder.borger.app.domain.Photo;
 import com.qminder.borger.app.repository.BurgerJointRepository;
-import com.qminder.borger.app.repository.PhotoRepository;
 import com.qminder.borger.foursquare.FoursquareService;
 import com.qminder.borger.imageRecognize.BurgerImageRecognizeService;
 import lombok.RequiredArgsConstructor;
@@ -19,7 +17,6 @@ import java.util.stream.Collectors;
 public class AppService {
 
     private final BurgerJointRepository burgerJointRepository;
-    private final PhotoRepository photoRepository;
 
     private final FoursquareService foursquareService;
     private final BurgerImageRecognizeService burgerImageRecognizeService;
@@ -28,36 +25,34 @@ public class AppService {
         return burgerJointRepository.findAll();
     }
 
-    public List<Photo> findAllBurgerJointsPhotos() {
-        return photoRepository.findAll();
+    public List<BurgerJoint> findAndSaveNewBurgerJoints() {
+        var newJoints = getNewBurgerJoints();
+        return burgerJointRepository.saveAll(newJoints);
     }
 
-    public void checkForNewBurgerJoints() {
-        // NB! heavy algorithm
-
-        // get all burgerJoints
-        var burgerJoints = foursquareService.getTartuBurgerJoints();
+    private List<BurgerJoint> getNewBurgerJoints() {
+        var apiJoints = foursquareService.getTartuBurgerJoints();
         var repoJoints = burgerJointRepository.findAll();
-        // check if any new burgerJoints
-        var newJoints = burgerJoints.stream()
-                .filter(b -> !repoJoints.contains(b))
+        // NB! heavy filter operation
+        var operationCreation = LocalDateTime.now(Clock.systemUTC());
+        var newJoints =
+                apiJoints.stream()
+                .filter(b -> repoJoints.stream().noneMatch(o -> b.getFsqId().equals(o.getFsqId())))
+                .map(b -> {
+                    b.setPhotoUrl(getBurgerPhotoUrlByFsqId(b.getFsqId()));
+                    b.setCreatedAt(operationCreation);
+                    return b;
+                })
                 .collect(Collectors.toList());
-        for (BurgerJoint newJoint : newJoints) {
-            // add new burgerJoints
-            var burgerJoint = burgerJointRepository.save(newJoint);
-            // save burger photo
-            filterAndSavePhoto(burgerJoint);
-        }
+        return newJoints;
     }
 
-    private Photo filterAndSavePhoto(BurgerJoint burgerJoint) {
-        // filtering included
-        var burgerPhoto = burgerImageRecognizeService.findFirstBurgerImage(
-                foursquareService.getTartuBurgerJointPhotos(burgerJoint.getFsqId()));
-        var photo = new Photo();
-        photo.setPhotoUrl(burgerPhoto);
-        photo.setCreatedAt(LocalDateTime.now(Clock.systemUTC()));
-        photo.setBurgerJoint(burgerJoint);
-        return photoRepository.save(photo);
+    private String getBurgerPhotoUrlByFsqId(String fsqId) {
+        var burgerPhotoUrl = burgerImageRecognizeService.findFirstBurgerImage(
+                foursquareService.getTartuBurgerJointPhotos(fsqId));
+        if(burgerPhotoUrl.isEmpty() || burgerPhotoUrl.isBlank()) {
+            return "";
+        }
+        return burgerPhotoUrl;
     }
 }

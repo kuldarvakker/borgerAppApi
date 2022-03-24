@@ -5,15 +5,15 @@ import com.google.gson.reflect.TypeToken;
 import com.qminder.borger.app.domain.BurgerJoint;
 import com.qminder.borger.foursquare.domain.BurgerJointOutput;
 import com.qminder.borger.foursquare.domain.PhotoOutput;
+import com.qminder.borger.utils.Utils;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
+import okhttp3.Response;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
-import java.time.Clock;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -37,25 +37,31 @@ public class FoursquareService {
                 .addHeader("Accept", "application/json")
                 .addHeader("Authorization", apiKey)
                 .build();
+
+        Response response = null;
         try {
-            var response = client.newCall(request).execute();
-            if (response.isSuccessful()) {
-                List<BurgerJointOutput.BJEntry> entries =
-                        gson.fromJson(response.body().string(), BurgerJointOutput.class).getResults();
-                for (var entry : entries) {
-                    var geocode = entry.getGeocodes().getMain();
-                    var oneBurgerJoint = new BurgerJoint();
-                    oneBurgerJoint.setFsqId(entry.getFsq_id());
-                    oneBurgerJoint.setName(entry.getName());
-                    oneBurgerJoint.setLatitude(geocode.getLatitude());
-                    oneBurgerJoint.setLongitude(geocode.getLongitude());
-                    oneBurgerJoint.setCreatedAt(LocalDateTime.now(Clock.systemUTC()));
-                    result.add(oneBurgerJoint);
-                }
+            response = client.newCall(request).execute();
+            if (!response.isSuccessful()) {
+                throw new IllegalStateException("Response unsuccessful");
             }
+            var entries =
+                    gson.fromJson(response.body().string(), BurgerJointOutput.class)
+                            .getResults();
+            var burgerJoints = entries.stream()
+                    .map(e -> {
+                        var geocode = e.getGeocodes().getMain();
+                        return new BurgerJoint(e.getFsq_id(), e.getName(), geocode.getLatitude(), geocode.getLongitude());
+                    })
+                    .collect(Collectors.toList());
+
+            result.addAll(burgerJoints);
 
         } catch (IOException e) {
-            throw new RuntimeException("Error with BurgerJoints.");
+            throw new RuntimeException("service:IO_Error BurgerJoints.");
+        } catch (IllegalStateException e) {
+            throw new RuntimeException("service:Response_Error BurgerJoints.");
+        }finally {
+            Utils.close(response);
         }
         return result;
     }
@@ -68,19 +74,23 @@ public class FoursquareService {
                 .addHeader("Accept", "application/json")
                 .addHeader("Authorization", apiKey)
                 .build();
+        Response response = null;
         try {
-            var response = client.newCall(request).execute();
-            if (response.isSuccessful()) {
-                Type photoOutputListType = new TypeToken<ArrayList<PhotoOutput>>(){}.getType();
-                List<PhotoOutput> photos = gson.fromJson(response.body().string(), photoOutputListType);
-                return photos.stream()
-                        .map(photo -> photo.getPrefix() + "original" + photo.getSuffix())
-                        .collect(Collectors.toList());
+            response = client.newCall(request).execute();
+            if (!response.isSuccessful()) {
+                throw new IllegalStateException("Response unsuccessful");
             }
+            Type photoOutputListType = new TypeToken<ArrayList<PhotoOutput>>(){}.getType();
+            List<PhotoOutput> photos = gson.fromJson(response.body().string(), photoOutputListType);
+            return photos.stream()
+                    .map(photo -> photo.getPrefix() + "original" + photo.getSuffix())
+                    .collect(Collectors.toList());
         } catch (IOException e) {
-            throw new RuntimeException("Error with BurgerJoint photos.");
+            throw new RuntimeException("service:IO_Error BurgerJoint photos.");
+        } catch (IllegalStateException e) {
+            throw new RuntimeException("service:Response_Error BurgerJoint photos.");
+        } finally {
+            Utils.close(response);
         }
-
-        return new ArrayList<>();
     }
 }
